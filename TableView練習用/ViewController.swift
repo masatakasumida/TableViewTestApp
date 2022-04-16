@@ -8,12 +8,17 @@
 import UIKit
 
 class ViewController: UIViewController {
-    var indexPathRow = 0
+    
     var vegetable = ["人参","玉葱","南瓜"]
     var fruits = ["キウイ","オレンジ","メロン"]
     let sectionTitle: NSArray = ["野菜", "フルーツ"]
+        
     
     @IBOutlet weak var tableView: UITableView!
+    @IBAction func toSecondViewButton(_ sender: Any) {
+        let secondVC = storyboard?.instantiateViewController(identifier: "secondView") as! SecondViewController
+        navigationController?.pushViewController(secondVC,animated: true)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,39 +39,48 @@ class ViewController: UIViewController {
         //左にチェックマークが付く※isEditingモードで有効になる　同時に複数選択可能になる
         tableView.allowsMultipleSelectionDuringEditing = true
     }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        let indexPaths = tableView.indexPathsForSelectedRows
     
-    func makeContextMenu() -> UIMenu {
+        self.tableView.reloadData()
         
-        let edit = UIAction(title: "編集", image: UIImage(systemName: "pencil")) { action in
-            var uiTextField = UITextField()
-            let ac = UIAlertController(title: "編集内容を記入して下さい", message: "", preferredStyle: .alert)
-            let ok = UIAlertAction(title: "編集する", style: .default) { (action) in
-                print(uiTextField.text!)
-            }
-            let cancel = UIAlertAction(title: "キャンセル", style: .cancel) { (action) in
-                print("キャンセルされました")
-            }
-            ac.addTextField { (textField) in
-                uiTextField.placeholder = "メモ"
-                uiTextField = textField
-                textField.keyboardType = .namePhonePad
-            }
-            ac.addAction(ok)
-            ac.addAction(cancel)
-            self.present(ac, animated: true, completion: nil)
-            print("編集します")
-            
+                
+        indexPaths?.forEach {
+            tableView.selectRow(at: $0, animated: false, scrollPosition: .none)
         }
-        let delete = UIAction(title: "削除", image: UIImage(systemName: "trash"), attributes: .destructive) { action in
-            
-            
-            let indexPath = IndexPath(row: self.indexPathRow, section: 0)
-            self.vegetable.remove(at: self.indexPathRow)
-            self.tableView.deleteRows(at: [indexPath], with: .automatic)
-            //self.tableView.reloadData()
-        }
-        return UIMenu(title: "Menu", children: [edit, delete])
     }
+    
+    //    func makeContextMenu(indexPathRow: Int) -> UIMenu {
+    //
+    //        let edit = UIAction(title: "編集", image: UIImage(systemName: "pencil")) { action in
+    //            var uiTextField = UITextField()
+    //            let ac = UIAlertController(title: "編集内容を記入して下さい", message: "", preferredStyle: .alert)
+    //            let ok = UIAlertAction(title: "編集する", style: .default) { (action) in
+    //                print(uiTextField.text!)
+    //            }
+    //            let cancel = UIAlertAction(title: "キャンセル", style: .cancel) { (action) in
+    //                print("キャンセルされました")
+    //            }
+    //            ac.addTextField { (textField) in
+    //                uiTextField.placeholder = "メモ"
+    //                uiTextField = textField
+    //                textField.keyboardType = .namePhonePad
+    //            }
+    //            ac.addAction(ok)
+    //            ac.addAction(cancel)
+    //            self.present(ac, animated: true, completion: nil)
+    //            print("編集します")
+    //
+    //        }
+    //        let delete = UIAction(title: "削除", image: UIImage(systemName: "trash"), attributes: .destructive) { action in
+    //            let indexPath = IndexPath(row: indexPathRow, section: 0)
+    //            self.vegetable.remove(at: indexPathRow)
+    //            self.tableView.deleteRows(at: [indexPath], with: .automatic)
+    //            //self.tableView.reloadData()
+    //        }
+    //        return UIMenu(title: "Menu", children: [edit, delete])
+    //    }
     
 }
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
@@ -99,11 +113,13 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     //        }
     //    }
     //セルの長押し時、実行されるメソッド
-    func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil, actionProvider: { suggestedActions in
-            return self.makeContextMenu()
-        })
-    }
+    //    func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+    //        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil, actionProvider: { suggestedActions in
+    //            var indexPathRow = 0
+    //            indexPathRow = indexPath.row
+    //            return self.makeContextMenu(indexPathRow: indexPathRow)
+    //        })
+    //    }
     // セクション数を指定
     func numberOfSections(in tableView: UITableView) -> Int {
         return sectionTitle.count
@@ -146,16 +162,31 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
             cell.imageView?.image = UIImage(named: "blue")
             cell.textLabel?.textColor = UIColor.red
             cell.textLabel?.font = UIFont.boldSystemFont(ofSize: 30)
+            return cell
         }
         else if indexPath.section == 1 {
             cell.textLabel?.text = String(describing: fruits[indexPath.row])
             cell.textLabel?.textColor = UIColor.blue
             cell.textLabel?.font = UIFont.boldSystemFont(ofSize: 40)
+            
         }
         return cell
     }
-    // Cellがタップされた時の処理はここ
+    //Cellがタップされた時の処理はここ
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print("\(indexPath.row)がtapされたよ")
+        if let cell = tableView.cellForRow(at: indexPath) {
+            let attributeString =  NSMutableAttributedString(string: vegetable[indexPath.row])
+            attributeString.addAttribute(NSAttributedString.Key.strikethroughStyle, value: 2, range: NSMakeRange(0, attributeString.length))
+            cell.textLabel?.attributedText = attributeString
+            
+        }
+    }
+    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        if let cell = tableView.cellForRow(at: indexPath) {
+            let attributeString =  NSMutableAttributedString(string: vegetable[indexPath.row])
+            attributeString.addAttribute(NSAttributedString.Key.strikethroughStyle, value: 0, range: NSMakeRange(0, attributeString.length))
+            cell.textLabel?.attributedText = attributeString
+        }
     }
 }
